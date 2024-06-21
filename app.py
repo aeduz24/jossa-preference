@@ -18,14 +18,6 @@ def filter_data(df, gender, seat_type, quota, rank):
 
 st.title("AeduZ's Counselling Helper")
 
-# User inputs
-# year = st.number_input('Enter Year:', min_value=2000, step=1)
-# year=st.selectbox('select Year',[2023])
-# round_num = st.selectbox('Select Round:', [1,2,3,4,6])
-# gender = st.selectbox('Select Gender:', ['Gender-Neutral', 'Female-only (including Supernumerary)'])
-# seat_type = st.selectbox('Select Seat Type:', ['OPEN', 'EWS', 'OBC-NCL', 'SC', 'ST', 'OPEN (PwD)', 'OBC-NCL (PwD)', 'EWS (PwD)', 'ST (PwD)', 'SC (PwD)'])
-# quota = st.selectbox('Select Quota:', ['AI', 'HS', 'OS', 'GO', 'JK', 'LA'])
-# rank = st.number_input('Enter Rank:', min_value=0, step=1)
 st.sidebar.title('Filters')
 
 # User inputs in the sidebar
@@ -58,7 +50,41 @@ df['Closing Rank']=df['Closing Rank'].astype(float)
 nirf_iit=pd.read_csv('nirf_rank_iit.csv')
 nirf_nit=pd.read_csv('nirf_rank_nit.csv')
 
-if st.button('Find'):
+sort_options = ['College Rank', 'Engineering Branch', 'Dual degree']
+selected_sort = st.selectbox("Select criteria to sort by:", sort_options)
+
+if selected_sort=="Engineering Branch":
+    branches = [
+        "Computer Science Engineering",
+        "Electrical Engineering",
+        "Mechanical Engineering",
+        "Electronics Engineering",
+        "Civil Engineering",
+        "Chemical Engineering",
+        "Aerospace Engineering",
+        "Metallurgical Engineering"
+        ]
+
+
+    new_order = st.multiselect(
+    "Drag to reorder:",
+    branches,
+    default=branches,
+    format_func=lambda x: x
+    )
+        
+    new_order=list(map(lambda x:x.replace(" Engineering",""),new_order))
+    order_dict={new_order[i]:i for i in range(len(new_order))}
+    # print(order_dict)
+    def branch_func(branch):
+        for el in new_order:
+            if el in branch:
+                return order_dict[el]
+        return 100
+
+
+
+if st.button('Give preference'):
     # Filter DataFrame based on user inputs
     filtered_df = filter_data(df, gender, seat_type, quota, rank)
     if college=="IIT":
@@ -69,5 +95,29 @@ if st.button('Find'):
 
     df_final=df_merge.loc[:,['Institute', 'Academic Program Name','rank']].reset_index(drop=True)
     df_final.fillna(1000,inplace=True)
-    st.write('Filtered DataFrame:')
-    st.write(df_final.sort_values(by='rank', ascending=True).reset_index(drop=True))
+    df_final['rank_dual']=df_final['Academic Program Name'].apply(lambda x:1 if "5 Years" in x else 0)
+    df_final['rank_branch']=df_final['Academic Program Name'].apply(branch_func)
+    # ordered_items=df_final['Academic Program Name'].unique()
+    
+    st.write('Recommended Jossa list')
+
+    
+
+    if 'College Rank' == selected_sort:
+        df_final.sort_values(by='rank', ascending=True,inplace=True)
+        df_final.reset_index(drop=True,inplace=True)
+        print('sorting based on rank')
+
+    if 'Engineering Branch' == selected_sort:
+        df_final.sort_values(by='rank_branch', ascending=True,inplace=True)
+        df_final.reset_index(drop=True,inplace=True)
+        print('sorting based on brank')
+
+    if 'Dual degree' == selected_sort:
+        df_final.sort_values(by='rank_dual', ascending=True,inplace=True)
+        df_final.reset_index(drop=True,inplace=True)
+        print('sorting based degree')
+
+
+    st.write(df_final)
+   
