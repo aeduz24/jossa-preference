@@ -96,7 +96,6 @@ if st.button('Give preference'):
     df_final=df_merge.loc[:,['Institute', 'Academic Program Name','rank']].reset_index(drop=True)
     df_final.fillna(1000,inplace=True)
     df_final['rank_dual']=df_final['Academic Program Name'].apply(lambda x:1 if "5 Years" in x else 0)
-    df_final['rank_branch']=df_final['Academic Program Name'].apply(branch_func)
     # ordered_items=df_final['Academic Program Name'].unique()
     
     st.write('Recommended Jossa list')
@@ -109,6 +108,7 @@ if st.button('Give preference'):
         print('sorting based on rank')
 
     if 'Engineering Branch' == selected_sort:
+        df_final['rank_branch']=df_final['Academic Program Name'].apply(branch_func)
         df_final.sort_values(by='rank_branch', ascending=True,inplace=True)
         df_final.reset_index(drop=True,inplace=True)
         print('sorting based on brank')
